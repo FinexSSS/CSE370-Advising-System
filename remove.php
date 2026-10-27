@@ -1,67 +1,51 @@
 <?php
-include 'DBconnect.php';  // Ensure this path is correct
+require_once 'auth.php';
+require_role([ROLE_STUDENT, ROLE_FACULTY, ROLE_ADMIN]);
 
-session_start();
+[$user_id, $back] = advising_target();
 
-if (!isset($_SESSION['User_ID'])) {
-    header("Location: login.php");
-    exit;
-}
-
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['remove_course'])) {
-    $user_id = $_SESSION['User_ID'];
-    $course_code = $_POST['C_Code'];  
-    $section = $_POST['section'];     
-
+// Drop a course and give its seat back, or explain why not.
+function remove_course($conn, $user_id, $course_code, $section) {
     // Start a transaction
     $conn->begin_transaction();
 
     try {
-        // Prepare to delete the enrollment
-        $delete_query = "DELETE FROM enrollment WHERE Student_ID = ? AND C_Code = ? AND Section = ?;";
-        $stmt = $conn->prepare($delete_query);
-        if ($stmt === false) {
-            throw new Exception("Prepare failed: " . $conn->error);
+        $stmt = $conn->prepare("SELECT Grade FROM enrollment WHERE Student_ID = ? AND C_Code = ? AND Section = ? FOR UPDATE");
+        $stmt->bind_param("ssi", $user_id, $course_code, $section);
+        $stmt->execute();
+        $enrollment = $stmt->get_result()->fetch_assoc();
+
+        if (!$enrollment) {
+            $conn->rollback();
+            return "No such course found to remove.";
+        }
+        if ($enrollment['Grade'] !== null) {
+            $conn->rollback();
+            return "$course_code already has a grade, so it cannot be dropped.";
         }
 
-        $bind = $stmt->bind_param("sss", $user_id, $course_code, $section);
-        if (!$bind) {
-            throw new Exception("Bind param failed: " . $stmt->error);
-        }
+        $stmt = $conn->prepare("DELETE FROM enrollment WHERE Student_ID = ? AND C_Code = ? AND Section = ? LIMIT 1");
+        $stmt->bind_param("ssi", $user_id, $course_code, $section);
+        $stmt->execute();
 
-        $execute = $stmt->execute();
-        if (!$execute) {
-            throw new Exception("Execute failed: " . $stmt->error);
-        }
+        // Increase the seat count of that one section
+        $stmt = $conn->prepare("UPDATE section SET seat = seat + 1 WHERE C_Code = ? AND section = ? LIMIT 1");
+        $stmt->bind_param("si", $course_code, $section);
+        $stmt->execute();
 
-        if ($stmt->affected_rows > 0) {
-            // If the enrollment is successfully deleted, increase the seat count
-            $update_seat_query = "UPDATE section SET seat = seat + 1 WHERE C_Code = ? AND Section = ?;";
-            $stmt = $conn->prepare($update_seat_query);
-            if (!$stmt) {
-                throw new Exception("Prepare failed: " . $conn->error);
-            }
-
-            $stmt->bind_param("ss", $course_code, $section);
-            $stmt->execute();
-            if ($stmt->affected_rows > 0) {
-                $_SESSION['message'] = "Successfully removed the course and updated seat count.";
-                $conn->commit();  // Commit the transaction
-            } else {
-                throw new Exception("Failed to update seats, no seats were modified.");
-            }
-        } else {
-            $_SESSION['message'] = "No such course found to remove.";
-            $conn->rollback();  // Rollback the transaction
-        }
-    } catch (Exception $e) {
-        error_log($e->getMessage());
-        $_SESSION['message'] = $e->getMessage();
-        $conn->rollback();  // Ensure transaction is rolled back on error
+        $conn->commit();
+        return "Successfully removed $course_code and updated the seat count.";
+    } catch (mysqli_sql_exception $e) {
+        $conn->rollback();
+        error_log("Drop failed: " . $e->getMessage());
+        return "Could not remove the course, please try again.";
     }
-
-    $stmt->close();
-    header("Location: advising_panel.php");
-    exit;
 }
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['remove_course'])) {
+    $_SESSION['message'] = remove_course($conn, $user_id, (string) ($_POST['C_Code'] ?? ''), (int) ($_POST['section'] ?? 0));
+}
+
+header("Location: $back");
+exit;
 ?>

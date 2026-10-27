@@ -1,19 +1,19 @@
+<?php
+require_once 'auth.php';
+require_role([ROLE_FACULTY]);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BRACU Advising</title>
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
-    <link href="main.css" rel="stylesheet"> 
+    <link href="style.css" rel="stylesheet">
     <style>
-                body {
+        body {
             font-family: Arial, sans-serif;
             background: #f0f2f5;
             margin: 0;
-            padding: 20px;
-            position: relative; /* Added position relative */
         }
 
         .container {
@@ -25,11 +25,6 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             position: relative; /* Added position relative */
             z-index: 1; /* Ensure the container is above other elements */
-        }
-
-        #header {
-            position: relative; /* Added position relative */
-            z-index: 2; /* Ensure the header is above other elements */
         }
 
         h1 {
@@ -77,17 +72,13 @@
 </head>
 <body>
     <header id="header">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-2 header-title">
-                    <h1>ADVISING</h1>
-                </div>
-                <div class="col-md-10 header-links">
-                    <a href="courses.php">Courses</a>
-                    <a href="faculty.php" style="margin-left: 20px">Faculty</a>
-                    <a href="announce.php" style="margin-left: 20px">Announcements</a>
-                </div>
-            </div>
+        <div class="header-bar">
+            <h1>ADVISING</h1>
+            <nav class="header-links">
+                <a href="cse_details.php">Courses</a>
+                <a href="faculty.php">Faculty</a>
+                <a href="logout.php">Log Out</a>
+            </nav>
         </div>
     </header>
     <div class="container">
@@ -100,6 +91,3 @@
     </div>
 </body>
 </html>
-
-
-

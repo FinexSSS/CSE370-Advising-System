@@ -1,20 +1,14 @@
 <?php
-session_start();
-
-// Redirect to login page if 'Temp_ID' is not set in session
-if (!isset($_SESSION['Temp_ID'])) {
-    header("Location: home.php");
-    exit;
-}
-
-include('DBconnect.php');
+require_once 'auth.php';
+require_applicant();
 
 $temp_id = $_SESSION['Temp_ID'];
 
-// Fetch user details if needed (optional)
-$query = "SELECT name FROM new WHERE Temp_ID = '$temp_id'";
-$result = mysqli_query($conn, $query);
-$user = mysqli_fetch_assoc($result);
+// Fetch the applicant's name for the greeting
+$stmt = $conn->prepare("SELECT name FROM new WHERE Temp_ID = ?");
+$stmt->bind_param("s", $temp_id);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
 
 // Welcome message
 $welcomeMsg = "Welcome to BRACU University CSE Department";
@@ -104,8 +98,8 @@ $welcomeMsg = "Welcome to BRACU University CSE Department";
 </head>
 <body>
     <header>
-        <h1><?php echo $welcomeMsg; ?></h1>
-        <h2>Hello, <?php echo $user['name'] ?? 'Applicant'; ?>!</h2>
+        <h1><?php echo e($welcomeMsg); ?></h1>
+        <h2>Hello, <?php echo e($user['name'] ?? 'Applicant'); ?>!</h2>
     </header>
     <section>
         <p>The Computer Science and Engineering (CSE) program requires a total of 136 credits to graduate. Here's what you need to know as you start your journey with us:</p>
@@ -120,6 +114,7 @@ $welcomeMsg = "Welcome to BRACU University CSE Department";
             <li><a href="apply.php">Apply Now</a></li>
             <li><a href="status.php">Check Application Status</a></li>
             <li><a href="cse_details.php">Learn More About CSE Program</a></li>
+            <li><a href="logout.php">Log Out</a></li>
         </ul>
     </section>
 </body>

@@ -1,12 +1,6 @@
 <?php
-include 'DBconnect.php';  // Ensure this path is correct
-
-session_start();
-
-if (!isset($_SESSION['User_ID'])) {  // Assuming Role_ID 1 is for admins
-    header("Location: login.php");
-    exit;
-}
+require_once 'auth.php';
+require_role([ROLE_ADMIN]);
 ?>
 
 <!DOCTYPE html>
@@ -15,6 +9,7 @@ if (!isset($_SESSION['User_ID'])) {  // Assuming Role_ID 1 is for admins
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
+    <link href="style.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -74,11 +69,14 @@ if (!isset($_SESSION['User_ID'])) {  // Assuming Role_ID 1 is for admins
 </head>
 <body>
     <div class="container">
+        <?php nav_links(); ?>
         <h1>Admin Dashboard</h1>
         <ul>
             <li><button onclick="location.href='admit.php'">Admit Students</button></li>
             <li><button onclick="location.href='add_faculty.php'">Add Faculty</button></li>
             <li><button onclick="location.href='add_remove.php'">Manage Courses and Sections</button></li>
+            <li><button onclick="location.href='admin_advising_panel.php'">Student Advising</button></li>
+            <li><button onclick="location.href='cse_details.php'">Course Catalogue</button></li>
         </ul>
     </div>
 </body>

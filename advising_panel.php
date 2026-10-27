@@ -1,24 +1,21 @@
 <?php
-include 'DBconnect.php';  // Ensure this path is correct
-
-session_start();
-
-if (!isset($_SESSION['User_ID'])) {
-    header("Location: login.php");
-    exit;
-}
+require_once 'auth.php';
+require_once 'schedule.php';
+require_role([ROLE_STUDENT]);
 
 $user_id = $_SESSION['User_ID'];
+// Result of the last add or drop, shown once
 $message = $_SESSION['message'] ?? '';
+unset($_SESSION['message']);
 
 // Fetch available courses with sections and faculty initials
-$fetch_courses_query = "SELECT c.C_Code, c.C_Name, r.seat, r.Section, r.Section_ID, f.F_Initial FROM course c JOIN section r ON c.C_Code = r.C_Code LEFT JOIN faculty f ON f.F_Initial = r.F_Initial";
+$fetch_courses_query = "SELECT c.C_Code, c.C_Name, r.seat, r.section, r.section_id, r.F_initial FROM course c JOIN section r ON c.C_Code = r.C_Code ORDER BY c.C_Code, r.section";
 $stmt = $conn->prepare($fetch_courses_query);
 $stmt->execute();
 $courses = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Fetch current enrollments
-$fetch_enrollments_query = "SELECT c.C_Code, c.C_Name, e.Section FROM enrollment e JOIN course c ON e.C_Code = c.C_Code WHERE e.Student_ID = ?";
+$fetch_enrollments_query = "SELECT c.C_Code, c.C_Name, e.Section, e.Grade FROM enrollment e JOIN course c ON e.C_Code = c.C_Code WHERE e.Student_ID = ?";
 $stmt = $conn->prepare($fetch_enrollments_query);
 $stmt->bind_param("s", $user_id);
 $stmt->execute();
@@ -30,6 +27,7 @@ $enrollments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advising Panel</title>
+    <link href="style.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,12 +97,12 @@ $enrollments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 </head>
 <body>
     <div class="container">
+        <?php nav_links(); ?>
         <h1>Advising Panel</h1>
         <?php if (!empty($message)): ?>
-        <p><?php echo $message; ?></p>
-        <?php endif; 
-        //and check if seats empty, pre req check
-        ?>
+        <p><?php echo e($message); ?></p>
+        <?php endif; ?>
+        <p>Adding a course checks for a free seat, its prerequisites and clashes with your other classes.</p>
         <form action="add.php" method="post">
             <label for="search_course">Search Course:</label>
             <input type="text" id="search_course" onkeyup="filterDropdown()" placeholder="Search for courses...">
@@ -113,9 +111,8 @@ $enrollments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <div class="scroll-box">
                 <select name="course_section" id="course_section">
                     <?php foreach ($courses as $course): ?>
-                        <option value="<?php echo $course['Section_ID'] ?>">
-                            <?php echo $course['C_Code'] . " - " . $course['C_Name'] . " - Section " . $course['Section'] . " - " . $course['F_Initial'] . " (Seats: " . $course['seat'] . ")"; ?>
-                            
+                        <option value="<?php echo (int) $course['section_id']; ?>">
+                            <?php echo e($course['C_Code'] . " - " . $course['C_Name'] . " - Section " . $course['section'] . " - " . $course['F_initial'] . " (Seats: " . $course['seat'] . ")"); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -133,20 +130,25 @@ $enrollments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             </tr>
             <?php foreach ($enrollments as $enrollment): ?>
             <tr>
-                <td><?php echo $enrollment['C_Code']; ?></td>
-                <td><?php echo $enrollment['C_Name']; ?></td>
-                <td><?php echo $enrollment['Section']; ?></td>
+                <td><?php echo e($enrollment['C_Code']); ?></td>
+                <td><?php echo e($enrollment['C_Name']); ?></td>
+                <td><?php echo e($enrollment['Section']); ?></td>
                 <td>
+                    <?php if ($enrollment['Grade'] !== null): ?>
+                        Grade: <?php echo e($enrollment['Grade']); ?>
+                    <?php else: ?>
                     <form action="remove.php" method="post">
-                        <input type="hidden" name="C_Code" value="<?php echo $enrollment['C_Code']; ?>">
-                        <input type="hidden" name="section" value="<?php echo $enrollment['Section']; ?>">
+                        <input type="hidden" name="C_Code" value="<?php echo e($enrollment['C_Code']); ?>">
+                        <input type="hidden" name="section" value="<?php echo e($enrollment['Section']); ?>">
                         <button type="submit" name="remove_course">Remove</button>
                     </form>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>
         </table>
     </div>
+    <?php render_schedule($conn, $user_id); ?>
     <script>
         function filterDropdown() {
             var input, filter, select, options, txtValue;
@@ -166,102 +168,5 @@ $enrollments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         }
 
     </script>
-</body>
-</html>
-
-<?php
-// Fetch schedule for enrolled courses
-$schedule_query = "SELECT r.C_Code, r.day, r.s_time, r.e_time, r.room_code FROM room r JOIN enrollment e ON e.C_Code = r.C_Code AND e.section = r.sections WHERE e.Student_ID = ?;";
-$schedule_stmt = $conn->prepare($schedule_query);
-$schedule_stmt->bind_param("s", $user_id);
-$schedule_stmt->execute();
-$schedule_result = $schedule_stmt->get_result();
-$schedule = [];
-while ($row = $schedule_result->fetch_assoc()) {
-    $schedule[$row['day']][] = $row;
-}
-$schedule_stmt->close();
-?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Schedule</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-
-        .schedule-table {
-            width: 80%;
-            margin: 20px auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-
-        td {
-            background-color: #fff;
-        }
-    </style>
-</head>
-<body>
-    <div class="schedule-table">
-        <h2>Weekly Schedule</h2>
-        <table>
-            <tr>
-                <th>Time / Day</th>
-                <th>Sunday</th>
-                <th>Monday</th>
-                <th>Tuesday</th>
-                <th>Wednesday</th>
-                <th>Thursday</th>
-                <th>Friday</th>
-                <th>Saturday</th>
-            </tr>
-            <?php
-            $time_slots = ['08:00:00-09:20:00', '09:30:00-10:50:00', '11:00:00-12:20:00', '12:30:00-1:50:00', '2:00:00-3:20:00', '3:30:00-4:50:00'];
-            foreach ($time_slots as $time) {
-                echo "<tr><td>$time</td>";
-                foreach (['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as $day) {
-                    echo "<td>";
-                    if (isset($schedule[$day])) {
-                        foreach ($schedule[$day] as $class) {
-                            if ($time === $class['s_time'] . '-' . $class['e_time']) {
-                                echo $class['C_Code']."<br>";
-                                echo "Room: " . $class['room_code'] . "<br>";
-                            }
-                        }
-                    }
-                    echo "</td>";
-                }
-                echo "</tr>";
-            }
-            ?>
-        </table>
-    </div>
 </body>
 </html>

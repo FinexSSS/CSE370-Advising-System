@@ -1,0 +1,2 @@
+# Uploaded application documents are private: never serve them over the web.
+Require all denied

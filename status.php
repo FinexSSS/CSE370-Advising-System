@@ -1,17 +1,10 @@
 <?php
-session_start();
-
-// Redirect if not logged in or if the Temp_ID is not set
-if (!isset($_SESSION['Temp_ID'])) {
-    header("Location: login.php");
-    exit;
-}
-
-include('DBconnect.php');
+require_once 'auth.php';
+require_applicant();
 
 $temp_id = $_SESSION['Temp_ID'];
 $status_message = '';
-$action_button = '';
+$action_link = null; // [page, button text]
 
 // Fetch the current status from the 'new' table
 $query = "SELECT status FROM new WHERE Temp_ID = ?";
@@ -19,7 +12,7 @@ $stmt = $conn->prepare($query);
 $stmt->bind_param("s", $temp_id);
 $stmt->execute();
 $result = $stmt->get_result();
-$status = $result->fetch_assoc()['status'] ?? 0;
+$status = (int) ($result->fetch_assoc()['status'] ?? 0);
 
 switch ($status) {
     case 0:
@@ -33,16 +26,26 @@ switch ($status) {
         break;
     case 3:
         $status_message = "Results published: Congratulations, you got accepted!";
-        $action_button = '<button onclick="window.location.href=\'enroll.php\';">Enroll Now</button>';
+        // Admission creates a student account with the same email and password.
+        $stmt = $conn->prepare("SELECT 1 FROM users WHERE User_ID = ?");
+        $stmt->bind_param("s", $temp_id);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            $status_message .= " Log in again with the same email and password to open your student dashboard.";
+            $action_link = ['logout.php', 'Log In as a Student'];
+        } else {
+            $status_message .= " Your student account is being set up.";
+        }
         break;
     case 4:
         $status_message = "Results published: Unfortunately, you got rejected.";
-        $action_button = '<button onclick="window.location.href=\'apply.php\';">Apply Again</button>';
+        $action_link = ['apply.php', 'Apply Again'];
         break;
     case 5:
-        $status_message = "Results published: You are on the wait list.";
-        $action_button = '<button onclick="window.location.href=\'wait_list.php\';">View Details</button>';
+        $status_message = "Results published: You are on the wait list. This page will update if a seat opens for you.";
         break;
+    default:
+        $status_message = "Your application is being processed.";
 }
 
 ?>
@@ -52,6 +55,7 @@ switch ($status) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Status Page</title>
+    <link href="style.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -92,9 +96,12 @@ switch ($status) {
 </head>
 <body>
     <div class="status-message">
+        <?php nav_links(); ?>
         <h1>Status Update</h1>
-        <p><?php echo $status_message; ?></p>
-        <?php echo $action_button; ?>
+        <p><?php echo e($status_message); ?></p>
+        <?php if ($action_link): ?>
+            <button onclick="window.location.href='<?php echo e($action_link[0]); ?>';"><?php echo e($action_link[1]); ?></button>
+        <?php endif; ?>
     </div>
 </body>
 </html>

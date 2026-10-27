@@ -1,6 +1,6 @@
 <?php
-// Establish database connection (ensure your connection details are correct)
-include 'DBconnect.php';
+// The course catalogue is public; logged-in visitors also get their dashboard link.
+require_once 'auth.php';
 
 $search_result = '';
 $courses = [];
@@ -8,7 +8,7 @@ $searched = false;
 
 // Handle search
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search_code'])) {
-    $search_code = $_POST['search_code'];
+    $search_code = trim((string) $_POST['search_code']);
     $searched = true;
     $stmt = $conn->prepare("SELECT * FROM course WHERE C_Code = ?");
     $stmt->bind_param("s", $search_code);
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search_code'])) {
 
 // Get all courses if no specific search or search failed
 if (!$searched || $search_result === null) {
-    $result = $conn->query("SELECT * FROM course");
+    $result = $conn->query("SELECT * FROM course ORDER BY C_Code");
     if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
             $courses[] = $row;
@@ -40,6 +40,7 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSE Course Details</title>
+    <link href="style.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -101,29 +102,33 @@ $conn->close();
 </head>
 <body>
     <div class="container">
+        <?php if (isset($_SESSION['Role_ID']) || isset($_SESSION['Temp_ID'])): ?>
+            <?php nav_links(); ?>
+        <?php else: ?>
+            <nav class="nav-links"><a href="home.php">Log In</a> <a href="register.php">Apply</a></nav>
+        <?php endif; ?>
         <h1>CSE Course Details</h1>
         <form method="post">
-            <input type="text" name="search_code" placeholder="Enter Course Code">
+            <input type="text" name="search_code" placeholder="Enter Course Code" value="<?php echo e($_POST['search_code'] ?? ''); ?>">
             <button type="submit">Search</button>
         </form>
 
-        <?php
-        if ($searched) {
-            if ($search_result) {
-                echo "<table><tr><th>Course Code</th><th>Name</th><th>Credits</th><th>Description</th></tr>";
-                echo "<tr><td>{$search_result['C_Code']}</td><td>{$search_result['C_Name']}</td><td>{$search_result['Credit']}</td><td>{$search_result['C_Desc']}</td></tr>";
-                echo "</table>";
-            } else {
-                echo "<p class='no-results'>No course found with that code.</p>";
-            }
-        } else {
-            echo "<table><tr><th>Course Code</th><th>Name</th><th>Credits</th><th>Description</th></tr>";
-            foreach ($courses as $course) {
-                echo "<tr><td>{$course['C_Code']}</td><td>{$course['C_Name']}</td><td>{$course['Credit']}</td><td>{$course['C_Desc']}</td></tr>";
-            }
-            echo "</table>";
-        }
-        ?>
+        <?php if ($searched && !$search_result): ?>
+            <p class="no-results">No course found with that code.</p>
+        <?php else: ?>
+            <table>
+                <tr><th>Course Code</th><th>Name</th><th>Credits</th><th>Prerequisites</th><th>Description</th></tr>
+                <?php foreach ($searched ? [$search_result] : $courses as $course): ?>
+                    <tr>
+                        <td><?php echo e($course['C_Code']); ?></td>
+                        <td><?php echo e($course['C_Name']); ?></td>
+                        <td><?php echo e($course['Credit']); ?></td>
+                        <td><?php echo e($course['Prereq'] ?: 'None'); ?></td>
+                        <td><?php echo e($course['C_Desc']); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php endif; ?>
     </div>
 </body>
 </html>

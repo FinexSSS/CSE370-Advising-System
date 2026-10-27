@@ -1,63 +1,67 @@
 <?php
-// Start the session
-session_start();
+require_once 'auth.php';
 
-// first of all, we need to connect to the database
-require_once('DBconnect.php');
-
-// we need to check if the input in the form textfields are not empty
-if(isset($_POST['email']) && isset($_POST['password'])){
-	// write the query to check if this username and password exists in our database
-	$u = $_POST['email'];
-	$p = $_POST['password'];
-	$sql = "SELECT * FROM users WHERE email = '$u' AND password = '$p'";
-	
-	//Execute the query 
-	$result = mysqli_query($conn, $sql);
-	
-	//check if it returns an empty set
-	if(mysqli_num_rows($result) != 0 ){
-		echo "LET HIM ENTER";
-		// Fetch the role from the database
-		$row = mysqli_fetch_assoc($result);
-		
-		$User_ID = $row['User_ID'];
-		// Store the user's role in the session variable
-		$_SESSION['User_ID'] = $User_ID;
-
-		$role = $row['Role_ID'];
-		if($role == 1){
-			header("Location: student.php");
-			exit(); // Ensure no further code execution after redirect
-		}
-		elseif($role == 2){
-			header("Location: faculty.php");
-			exit(); // Ensure no further code execution after redirect
-		}
-		elseif($role == 3){
-			header("Location: admin.php");
-			exit(); // Ensure no further code execution after redirect
-		}
-
+// Check a password against what is stored. Accounts saved before passwords were
+// hashed still hold plain text: those are accepted once and upgraded to a hash.
+function password_matches($conn, $table, $id_column, $id, $password, $stored) {
+	if (password_get_info((string) $stored)['algo'] !== null) {
+		return password_verify($password, $stored);
 	}
-	else{
-		$sql = "SELECT * FROM new WHERE email = '$u' AND password = '$p'";
-		$result = mysqli_query($conn, $sql);
-		if(mysqli_num_rows($result) != 0 ){
-			echo "LET HIM ENTER";
-			// Fetch the role from the database
-			$row = mysqli_fetch_assoc($result);
-			
-			$Temp_ID = $row['Temp_ID'];
-			// Store the user's role in the session variable
-			$_SESSION['Temp_ID'] = $Temp_ID;
-			header("Location: new.php");
-			exit();
-		}
-		echo "Username or Password is wrong";
-		header("Location: admin.php");
-		exit(); // Ensure no further code execution after redirect
+	if (!hash_equals((string) $stored, $password)) {
+		return false;
 	}
-	
+	// $table and $id_column are fixed names from this file, never user input.
+	try {
+		$stmt = $conn->prepare("UPDATE $table SET PASSWORD = ? WHERE $id_column = ?");
+		$hash = password_hash($password, PASSWORD_DEFAULT);
+		$stmt->bind_param("ss", $hash, $id);
+		$stmt->execute();
+	} catch (mysqli_sql_exception $e) {
+		// A database made from the old advising.sql has a PASSWORD column too short
+		// for a hash. Log in anyway; re-importing advising.sql fixes the column.
+		error_log("Could not upgrade the password for $id: " . $e->getMessage());
+	}
+	return true;
 }
+
+if (!isset($_POST['email'], $_POST['password'])) {
+	header("Location: home.php");
+	exit;
+}
+
+$email = trim($_POST['email']);
+$password = $_POST['password'];
+
+// Students, faculty and admins
+$stmt = $conn->prepare("SELECT User_ID, Role_ID, PASSWORD FROM users WHERE Email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
+
+if ($user && password_matches($conn, 'users', 'User_ID', $user['User_ID'], $password, $user['PASSWORD'])) {
+	// A new session ID on login prevents session fixation.
+	session_regenerate_id(true);
+	unset($_SESSION['Temp_ID']);
+	$_SESSION['User_ID'] = $user['User_ID'];
+	$_SESSION['Role_ID'] = (int) $user['Role_ID'];
+	header("Location: " . dashboard_for($user['Role_ID']));
+	exit;
+}
+
+// Applicants who registered but have not been admitted yet
+$stmt = $conn->prepare("SELECT Temp_ID, PASSWORD FROM new WHERE Email = ?");
+$stmt->bind_param("s", $email);
+$stmt->execute();
+$applicant = $stmt->get_result()->fetch_assoc();
+
+if ($applicant && password_matches($conn, 'new', 'Temp_ID', $applicant['Temp_ID'], $password, $applicant['PASSWORD'])) {
+	session_regenerate_id(true);
+	unset($_SESSION['User_ID'], $_SESSION['Role_ID']);
+	$_SESSION['Temp_ID'] = $applicant['Temp_ID'];
+	header("Location: new.php");
+	exit;
+}
+
+header("Location: home.php?error=1");
+exit;
 ?>

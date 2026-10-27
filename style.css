@@ -1,0 +1,151 @@
+/* Shared styles. Pages link this first, so their own <style> rules take precedence. */
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    margin: 0;
+}
+
+#header {
+    background: #005691;
+    color: white;
+}
+
+#header .header-bar {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+#header h1 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: white;
+}
+
+#header .header-links a {
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+#header .header-links a:hover {
+    text-decoration: underline;
+}
+
+.card {
+    background: white;
+    max-width: 420px;
+    margin: 40px auto;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+.btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background: #007BFF;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #0056b3;
+}
+
+.notice {
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.notice.error {
+    background: #fdecea;
+    color: #b71c1c;
+}
+
+.notice.success {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.muted {
+    text-align: center;
+    color: #666;
+    margin-top: 16px;
+}
+
+/* Dashboard and log out links at the top of logged-in pages */
+.nav-links {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.nav-links a {
+    margin-left: 15px;
+}
+
+/* Weekly class schedule (schedule.php) */
+.schedule-table {
+    width: 80%;
+    margin: 20px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+}
+
+.schedule-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.schedule-table th,
+.schedule-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+    background-color: #fff;
+}
+
+.schedule-table th {
+    background-color: #007bff;
+    color: white;
+}

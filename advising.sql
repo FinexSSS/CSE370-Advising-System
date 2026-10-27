@@ -321,28 +321,29 @@ CREATE TABLE `new` (
   `Temp_ID` varchar(20) NOT NULL,
   `Email` varchar(50) DEFAULT NULL,
   `Role_ID` int(11) DEFAULT NULL,
-  `PASSWORD` varchar(50) DEFAULT NULL,
+  `PASSWORD` varchar(255) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
-  `phone` int(11) DEFAULT NULL
+  `phone` varchar(20) DEFAULT NULL,
+  `status` int(11) NOT NULL DEFAULT 0 COMMENT '0 registered, 1 applied, 2 paid, 3 accepted, 4 rejected, 5 wait list'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `new`
 --
 
-INSERT INTO `new` (`Temp_ID`, `Email`, `Role_ID`, `PASSWORD`, `name`, `phone`) VALUES
-('0.15522042769493574', 'adam@gmail.com', 0, 'password', 'Adam Apple', 1),
-('54321', 'tanzim.hasan@gmail.com', 0, 'password', 'Tanzim Hasan', 1),
-('54322', 'sultana.akter@gmail.com', 0, 'password', 'Sultana Akter', 0),
-('54323', 'akash.islam@gmail.com', 0, 'password', 'Akash Islam', 2),
-('54324', 'fariha.kabir@gmail.com', 0, 'password', 'Fariha Kabir', 3),
-('54325', 'shakil.ahmed@gmail.com', 0, 'password', 'Shakil Ahmed', 1),
-('54326', 'samina.akhter@gmail.com', 0, 'password', 'Samina Akhter', 2),
-('54327', 'anika.rahman@gmail.com', 0, 'password', 'Anika Rahman', 4),
-('54328', 'nayeem.khan@gmail.com', 0, 'password', 'Nayeem Khan', 3),
-('54329', 'sabrina.islam@gmail.com', 0, 'password', 'Sabrina Islam', 1),
-('54330', 'arman.uddin@gmail.com', 0, 'password', 'Arman Uddin', 5),
-('65854', 'gom@gmail.com', 0, 'password', 'Gom Khalo', 3);
+INSERT INTO `new` (`Temp_ID`, `Email`, `Role_ID`, `PASSWORD`, `name`, `phone`, `status`) VALUES
+('0.15522042769493574', 'adam@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Adam Apple', NULL, 1),
+('54321', 'tanzim.hasan@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Tanzim Hasan', NULL, 1),
+('54322', 'sultana.akter@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Sultana Akter', NULL, 0),
+('54323', 'akash.islam@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Akash Islam', NULL, 2),
+('54324', 'fariha.kabir@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Fariha Kabir', NULL, 3),
+('54325', 'shakil.ahmed@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Shakil Ahmed', NULL, 1),
+('54326', 'samina.akhter@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Samina Akhter', NULL, 2),
+('54327', 'anika.rahman@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Anika Rahman', NULL, 4),
+('54328', 'nayeem.khan@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Nayeem Khan', NULL, 3),
+('54329', 'sabrina.islam@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Sabrina Islam', NULL, 1),
+('54330', 'arman.uddin@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Arman Uddin', NULL, 5),
+('65854', 'gom@gmail.com', 0, '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Gom Khalo', NULL, 3);
 
 -- --------------------------------------------------------
 
@@ -4079,7 +4080,7 @@ CREATE TABLE `users` (
   `User_ID` varchar(20) NOT NULL,
   `Role_ID` int(11) NOT NULL,
   `Email` varchar(50) NOT NULL,
-  `PASSWORD` varchar(50) DEFAULT NULL,
+  `PASSWORD` varchar(255) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -4088,29 +4089,29 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`User_ID`, `Role_ID`, `Email`, `PASSWORD`, `name`) VALUES
-('0.15522042769493574', 0, 'adam@gmail.com', 'password', 'Adam Apple'),
-('1234', 3, 'tania.aziz@gmail.com', 'password', 'Tania Aziz'),
-('1235', 3, 'masud.rahman@gmail.com', 'password', 'Masud Rahman'),
-('1236', 3, 'shahnaz.begum@gmail.com', 'password', 'Shahnaz Begum'),
-('1237', 3, 'arif.hasan@gmail.com', 'password', 'Arif Hasan'),
-('1238', 3, 'naima.sultana@gmail.com', 'password', 'Naima Sultana'),
-('1239', 3, 'monirul.islam@gmail.com', 'password', 'Monirul Islam'),
-('22301101', 1, 'farhana.ahmed@gmail.com', 'password', 'Farhana Ahmed'),
-('22301102', 1, 'rahim.khan@gmail.com', 'password', 'Rahim Khan'),
-('22301103', 1, 'tasnim.akhter@gmail.com', 'password', 'Tasnim Akhter'),
-('22301104', 1, 'mohammad.rahman@gmail.com', 'password', 'Mohammad Rahman'),
-('22301105', 1, 'jannatul.islam@gmail.com', 'password', 'Jannatul Islam'),
-('22301106', 1, 'abdul.karim@gmail.com', 'password', 'Abdul Karim'),
-('22301107', 1, 'nusrat.jahan@gmail.com', 'password', 'Nusrat Jahan'),
-('22301108', 1, 'imran.hossain@gmail.com', 'password', 'Imran Hossain'),
-('22301109', 1, 'sarah.akhtar@gmail.com', 'password', 'Sarah Akhtar'),
-('22301110', 1, 'riaz.uddin@gmail.com', 'password', 'Riaz Uddin'),
-('22301111', 1, 'fatima.khatun@gmail.com', 'password', 'Fatima Khatun'),
-('22300001', 1, 'demo.student@example.com', 'password', 'Demo Student'),
-('6563451', 2, 'sadia.akter@gmail.com', 'password', 'Sadia Akter'),
-('65854', 1, 'gom@gmail.com', 'password', 'Gom Khalo'),
-('7226212', 2, 'kamal.hossain@gmail.com', 'password', 'Kamal Hossain'),
-('8074414', 2, 'anwarul.haque@gmail.com', 'password', 'Anwarul Haque');
+('0.15522042769493574', 0, 'adam@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Adam Apple'),
+('1234', 3, 'tania.aziz@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Tania Aziz'),
+('1235', 3, 'masud.rahman@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Masud Rahman'),
+('1236', 3, 'shahnaz.begum@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Shahnaz Begum'),
+('1237', 3, 'arif.hasan@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Arif Hasan'),
+('1238', 3, 'naima.sultana@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Naima Sultana'),
+('1239', 3, 'monirul.islam@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Monirul Islam'),
+('22301101', 1, 'farhana.ahmed@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Farhana Ahmed'),
+('22301102', 1, 'rahim.khan@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Rahim Khan'),
+('22301103', 1, 'tasnim.akhter@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Tasnim Akhter'),
+('22301104', 1, 'mohammad.rahman@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Mohammad Rahman'),
+('22301105', 1, 'jannatul.islam@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Jannatul Islam'),
+('22301106', 1, 'abdul.karim@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Abdul Karim'),
+('22301107', 1, 'nusrat.jahan@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Nusrat Jahan'),
+('22301108', 1, 'imran.hossain@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Imran Hossain'),
+('22301109', 1, 'sarah.akhtar@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Sarah Akhtar'),
+('22301110', 1, 'riaz.uddin@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Riaz Uddin'),
+('22301111', 1, 'fatima.khatun@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Fatima Khatun'),
+('22300001', 1, 'demo.student@example.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Demo Student'),
+('6563451', 2, 'sadia.akter@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Sadia Akter'),
+('65854', 1, 'gom@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Gom Khalo'),
+('7226212', 2, 'kamal.hossain@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Kamal Hossain'),
+('8074414', 2, 'anwarul.haque@gmail.com', '$2y$10$gJhjOGyF.qQtapBfIEBc.O67l0MGSJaHdtl7/o5f9Y79pQa3w3c8C', 'Anwarul Haque');
 
 --
 -- Indexes for dumped tables

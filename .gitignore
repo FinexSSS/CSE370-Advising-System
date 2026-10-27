@@ -1,2 +1,4 @@
-# Application uploads (personal documents)
-/documents/
+# Application uploads (personal documents). The .htaccess that keeps the folder
+# off the web is committed.
+/documents/*
+!/documents/.htaccess

@@ -1,19 +1,12 @@
 <?php
-include 'DBconnect.php';  // Make sure this path is correct
-
-session_start();
-
-// Check if the user is logged in and a student ID is available
-if (!isset($_SESSION['User_ID'])) {
-    // Redirect to login page if not logged in
-    header("Location: login.php");
-    exit;
-}
+require_once 'auth.php';
+require_once 'schedule.php';
+require_role([ROLE_STUDENT]);
 
 $user_id = $_SESSION['User_ID'];
 
 // Fetch personal data
-$personal_query = "SELECT User_ID, name, Email FROM users WHERE User_ID = ?";
+$personal_query = "SELECT u.User_ID, u.name, u.Email, s.Credit, s.CGPA, s.approval FROM users u LEFT JOIN student s ON s.Student_ID = u.User_ID WHERE u.User_ID = ?";
 $stmt = $conn->prepare($personal_query);
 $stmt->bind_param("s", $user_id);
 $stmt->execute();
@@ -38,26 +31,6 @@ foreach ($courseResult as $course) {
     }
 }
 
-// Fetch class schedule
-$schedule_query = "SELECT 
-e.Student_ID,
-c.C_Code,
-c.C_Name,
-e.Section,
-r.room_code,
-r.Day,
-r.s_time AS start_time,
-r.e_time AS end_time
-FROM enrollment e
-JOIN course c ON e.C_Code = c.C_Code
-JOIN room r ON e.C_Code = r.C_Code AND e.Section = r.Sections
-WHERE e.Student_ID = ?;  -- Replace '?' with the specific User_ID you're querying for
-";
-$stmt = $conn->prepare($schedule_query);
-$stmt->bind_param("s", $user_id);
-$stmt->execute();
-$scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,6 +38,7 @@ $scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
+    <link href="style.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -118,13 +92,18 @@ $scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     </style>
 </head>
 <body>
+    <?php nav_links(); ?>
     <header>
         <h1>Student Dashboard</h1>
     </header>
     <section>
         <h2>Personal Data</h2>
-        <p>Name: <?php echo $personalResult['name']; ?></p>
-        <p>Email: <?php echo $personalResult['Email']; ?></p>
+        <p>Name: <?php echo e($personalResult['name']); ?></p>
+        <p>Student ID: <?php echo e($personalResult['User_ID']); ?></p>
+        <p>Email: <?php echo e($personalResult['Email']); ?></p>
+        <p>Credits completed: <?php echo e($personalResult['Credit'] ?? 0); ?></p>
+        <p>CGPA: <?php echo $personalResult['CGPA'] === null ? 'Not available yet' : e($personalResult['CGPA']); ?></p>
+        <p>Advising approval: <?php echo (int) $personalResult['approval'] === 1 ? 'Approved' : 'Pending'; ?></p>
     </section>
     <section>
     <div class="courses-container">
@@ -132,7 +111,7 @@ $scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <h2>Core Courses</h2>
             <ul>
                 <?php foreach ($sortedCourses['Core'] as $course): ?>
-                    <li><?php echo $course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"; ?></li>
+                    <li><?php echo e($course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -140,7 +119,7 @@ $scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <h2>General Education Courses</h2>
             <ul>
                 <?php foreach ($sortedCourses['Gen Ed'] as $course): ?>
-                    <li><?php echo $course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"; ?></li>
+                    <li><?php echo e($course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -148,17 +127,13 @@ $scheduleResult = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <h2>Elective Courses</h2>
             <ul>
                 <?php foreach ($sortedCourses['Elective'] as $course): ?>
-                    <li><?php echo $course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"; ?></li>
+                    <li><?php echo e($course['C_Code'] . ": " . $course['C_Name'] . " (" . $course['Credit'] . " credits)"); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
     </div>
     </section>
-    <div>
-        <?php
-            include 'schedule.php';
-        ?>
-    </div>
+    <?php render_schedule($conn, $user_id); ?>
     <section>
         <button onclick="window.location.href='advising_panel.php';">Go to Advising Panel</button>
     </section>
